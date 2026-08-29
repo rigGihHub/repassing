@@ -1,20 +1,18 @@
 {
   "name": "repassing",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:validate": "prisma validate"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
     "next": "^15.5.2",
-    "next-intl": "^4.3.5",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

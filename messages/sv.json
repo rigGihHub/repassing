@@ -1,9 +1,10 @@
 {
   "club":"ÖSK Fotboll",
   "headline":"Låt utrustningen spela vidare.",
-  "subheadline":"Köp och sälj sportkläder och utrustning inom föreningen. Enklare för familjen. Bättre för sporten.",
+  "subheadline":"Köp och sälj sportkläder och utrustning där du redan är — i laget, föreningen och sporten.",
   "sell":"Sälj något",
-  "search":"Vad letar du efter?",
+  "browse":"Utforska marknaden",
+  "search":"Sök skor, kläder, klubbor…",
   "inClub":"I din förening",
   "latest":"Nytt just nu",
   "seeAll":"Visa alla",
@@ -13,5 +14,19 @@
   "searchNav":"Sök",
   "sellNav":"Sälj",
   "messages":"Medd.",
-  "profile":"Profil"
+  "profile":"Profil",
+  "size":"Strl",
+  "impactLabel":"Återbruk i föreningen",
+  "impactText":"produkter har fått spela vidare",
+  "filterAll":"Allt",
+  "filterFootball":"Fotboll",
+  "filterClothes":"Kläder",
+  "filterShoes":"Skor",
+  "filterFloorball":"Innebandy",
+  "valueLocal":"Lokalt först",
+  "valueLocalText":"Hitta utrustning i laget och föreningen.",
+  "valueFast":"Under en minut",
+  "valueFastText":"Fotografera, prissätt och publicera snabbt.",
+  "valueCircular":"Play more. Waste less.",
+  "valueCircularText":"Få mer sport ur det som redan finns."
 }

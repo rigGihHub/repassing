@@ -1,9 +1,10 @@
 {
   "club":"Your club",
   "headline":"Keep your gear in play.",
-  "subheadline":"Buy and sell sports clothing and equipment within your club. Easier for families. Better for sport.",
+  "subheadline":"Buy and sell sportswear and equipment where you already belong — in your team, club and sport.",
   "sell":"Sell something",
-  "search":"What are you looking for?",
+  "browse":"Explore marketplace",
+  "search":"Search shoes, clothing, sticks…",
   "inClub":"In your club",
   "latest":"New right now",
   "seeAll":"See all",
@@ -13,5 +14,19 @@
   "searchNav":"Search",
   "sellNav":"Sell",
   "messages":"Messages",
-  "profile":"Profile"
+  "profile":"Profile",
+  "size":"Size",
+  "impactLabel":"Reuse in your club",
+  "impactText":"items have been kept in play",
+  "filterAll":"All",
+  "filterFootball":"Football",
+  "filterClothes":"Clothing",
+  "filterShoes":"Shoes",
+  "filterFloorball":"Floorball",
+  "valueLocal":"Local first",
+  "valueLocalText":"Find gear in your team and club.",
+  "valueFast":"Under a minute",
+  "valueFastText":"Photograph, price and publish quickly.",
+  "valueCircular":"Play more. Waste less.",
+  "valueCircularText":"Get more sport from what already exists."
 }
