@@ -1,12 +1,34 @@
-# Repassing v0.4.0
+# Repassing v0.6.0 — Pilot-ready club platform
 
-## Live marketplace foundation
-- Supabase-backed marketplace feed.
-- Authenticated create-listing flow.
-- Live catalog/organization reference data in sell form.
-- Seller listings on profile.
-- Real active-listing count replaces the previous demo impact number.
-- Demo cards are retained only as an empty-market fallback.
+This release turns the existing organization foundation into a usable first pilot surface.
 
-## Verification
-The release was statically reviewed and package/config checks passed. A full `npm install` in the ChatGPT container timed out, so the authoritative compile/build verification is the Vercel deployment after push.
+## Added
+- Club pilot application flow for signed-in users.
+- Invite-code based member onboarding.
+- Club-admin dashboard for OWNER/ADMIN memberships.
+- Club settings for marketplace, local handoff, messaging, public contact email and website.
+- Team creation from the club-admin dashboard.
+- Public club marketplace at `/[locale]/clubs/[slug]` with active listings and pilot metrics.
+- Pilot KPI cards: active listings, completed trades, connected families and reused items.
+- Existing onboarding checklist surfaced in club admin.
+- `organization_invites` database table, deliberately server/service-role only.
+
+## Security
+- All club mutations authenticate server-side.
+- Admin mutations verify OWNER/ADMIN membership before service-role writes.
+- Invite codes never expose their backing table to anon/authenticated Data API roles.
+- No destructive database changes.
+
+## Known limitations
+- Pilot application approval remains an operational/admin step; a dedicated Repassing super-admin UI is not included yet.
+- Invite redemption currently joins at organization level; team-specific invite targeting is a follow-up.
+- Sustainability savings are not estimated in the UI until a defensible calculation model is chosen.
+
+## v0.6.1 – Pilot onboarding & club admin 2.0
+- Added a platform-admin review queue for club applications.
+- Approval now creates the organization, first OWNER membership, organization settings and onboarding checklist automatically.
+- Applications retain the created organization id and decision note for traceability.
+- Club invitation codes can optionally target a specific team.
+- Joining with a team-scoped code creates both club and team membership.
+- Platform-admin access is explicitly allowlisted through `REPASSING_PLATFORM_ADMIN_EMAILS`.
+- Raised supported Node.js floor to 22 to follow current Supabase client support.

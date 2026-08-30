@@ -17,9 +17,10 @@ export default async function SellPage({params,searchParams}:{params:Promise<{lo
     <div className="accountTop"><Link href={`/${locale}`}>← {sv?'Till marknaden':'Back to marketplace'}</Link><span className="previewBadge">LIVE MARKETPLACE</span></div>
     <section className="accountHero compactHero"><div><span className="eyebrow">{sv?'SÄLJ':'SELL'}</span><h1>{sv?'Låt utrustningen spela vidare':'Pass your gear forward'}</h1><p>{sv?'Skapa en riktig annons. Den publiceras direkt i marknaden.':'Create a real listing. It is published directly to the marketplace.'}</p></div></section>
     {query.error && <div className="formError">{sv?'Annonsen kunde inte sparas. Kontrollera uppgifterna och försök igen.':'The listing could not be saved. Check the fields and try again.'}</div>}
-    <form className="listingForm" action="/api/v1/listings" method="post">
+    <form className="listingForm" action="/api/v1/listings" method="post" encType="multipart/form-data">
       <input type="hidden" name="locale" value={locale}/>
       <label><span>{sv?'Rubrik':'Title'} *</span><input name="title" minLength={3} maxLength={120} required placeholder={sv?'Ex. Nike Mercurial fotbollsskor':'E.g. Nike Mercurial football boots'}/></label>
+      <label className="full"><span>{sv?'Bilder':'Photos'} *</span><input name="images" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple required/><small>{sv?'Lägg till upp till 6 bilder. Max 10 MB per bild.':'Add up to 6 photos. Max 10 MB per photo.'}</small></label>
       <label className="full"><span>{sv?'Beskrivning':'Description'}</span><textarea name="description" rows={5} maxLength={2000} placeholder={sv?'Storlek, modell och annan relevant information':'Size, model and other relevant information'}/></label>
       <label><span>{sv?'Pris':'Price'} *</span><input name="price" type="number" min="0" step="1" required placeholder="150"/></label>
       <label><span>{sv?'Valuta':'Currency'}</span><select name="currency" defaultValue="SEK"><option>SEK</option><option>EUR</option><option>NOK</option><option>DKK</option><option>GBP</option><option>USD</option></select></label>
@@ -32,6 +33,6 @@ export default async function SellPage({params,searchParams}:{params:Promise<{lo
       <label><span>{sv?'Varumärke':'Brand'}</span><select name="brand_id" defaultValue=""><option value="">{sv?'Inget valt':'None selected'}</option>{refs.brands.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
       <div className="full formActions"><button className="primary" type="submit">{sv?'Publicera annons':'Publish listing'}</button><Link className="secondary inlineAction" href={`/${locale}`}>{sv?'Avbryt':'Cancel'}</Link></div>
     </form>
-    <p className="panelNote">{sv?'Bildhantering kommer i nästa steg. Den här releasen verifierar den kompletta live-kedjan för användare och annonser.':'Image handling comes next. This release verifies the complete live user and listing flow.'}</p>
+    <p className="panelNote">{sv?'Bilder lagras säkert i Repassings Storage och visas direkt i marknaden.':'Photos are stored in Repassing Storage and shown directly in the marketplace.'}</p>
   </main>;
 }
