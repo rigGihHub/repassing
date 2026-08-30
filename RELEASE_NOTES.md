@@ -1,11 +1,12 @@
-# Repassing v0.3.1-fixed
+# Repassing v0.4.0
 
-Production Auth & Data Foundation, corrected for repository use.
+## Live marketplace foundation
+- Supabase-backed marketplace feed.
+- Authenticated create-listing flow.
+- Live catalog/organization reference data in sell form.
+- Seller listings on profile.
+- Real active-listing count replaces the previous demo impact number.
+- Demo cards are retained only as an empty-market fallback.
 
-## Fixes
-- Corrected the migration filename/order for `wire_auth_identity_and_user_policies` to `20260829203642_...`.
-- Keeps Supabase/PostgreSQL + versioned SQL migrations as the database source-of-truth direction.
-- Supabase Auth uses server-side cookie sessions and internal Repassing user IDs remain separate from Supabase auth subjects.
-
-## Important
-The live Supabase database contains additional migrations created after this application release (marketplace services, catalog/i18n, onboarding/analytics, transactions, finance, trust & safety, privacy, notifications/outbox, search, recommendations and liquidity). Do not run a destructive migration reset or assume this folder is a complete replay of the current production database yet. A later repository-sync release should add the complete live migration history before `supabase db reset` / full replay is used.
+## Verification
+The release was statically reviewed and package/config checks passed. A full `npm install` in the ChatGPT container timed out, so the authoritative compile/build verification is the Vercel deployment after push.
