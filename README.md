@@ -1,32 +1,25 @@
-# Repassing v0.1.1 — UI Foundation + Scalable Architecture
+# Repassing v0.3.1
 
-**Play more. Waste less.**
+International-ready circular sports marketplace foundation.
 
-This release polishes the first marketplace shell and establishes the architectural boundaries intended to carry Repassing from a Swedish pilot to an international marketplace.
+## Production runtime
 
-## What changed
-- Larger, clearer brand/header treatment
-- More marketplace-like desktop and mobile layout
-- Club context and quick filters
-- Real product illustration placeholders instead of emoji cards
-- Sustainability signal without turning the UI into an environmental dashboard
-- Modular-monolith domain skeleton under `src/modules`
-- Shared platform config and money value object
-- Expanded PostgreSQL/Prisma marketplace core: organizations, teams, listings, orders, payments, fees and fulfillment
-- Architecture and ADR documentation for scale, money/order invariants and provider abstraction
+The app now supports live Supabase Auth + Row Level Security backed application data without exposing a database password or service-role key to the web application.
 
-## Run locally
-```bash
+Required environment variables are documented in `.env.example` and `docs/architecture/LIVE_AUTH_AND_APP_CONNECTION.md`.
+
+## Local start
+
+```powershell
 npm.cmd install
 npm.cmd run dev
 ```
-Then open `http://localhost:3000`.
 
-## Validation
-```bash
+Open http://localhost:3000.
+
+## Verification
+
+```powershell
 npm.cmd run typecheck
 npm.cmd run build
 ```
-
-## Version
-0.1.1

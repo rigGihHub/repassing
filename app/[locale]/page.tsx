@@ -23,9 +23,9 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
       </Link>
       <div className="desktopSearch"><span>⌕</span><input aria-label={t.search} placeholder={t.search}/></div>
       <div className="headerActions">
-        <button className="clubPicker"><span className="clubDot"/>ÖSK Fotboll <span>⌄</span></button>
+        <Link className="clubPicker" href={`/${locale}/clubs`}><span className="clubDot"/>ÖSK Fotboll <span>⌄</span></Link>
         <Link className="lang" href={locale==='sv'?'/en':'/sv'}>{locale==='sv'?'EN':'SV'}</Link>
-        <button className="iconButton" aria-label={t.favorites}>♡</button>
+        <button className="iconButton" aria-label={t.favorites}>♡</button><Link className="profileButton" href={`/${locale}/profile`} aria-label={t.profile}>RP</Link>
       </div>
     </header>
 
@@ -75,8 +75,8 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
     </section>
 
     <nav className="bottomNav" aria-label="Huvudnavigation">
-      <button className="active">⌂<span>{t.home}</span></button><button>⌕<span>{t.searchNav}</span></button>
-      <button className="sellFab">＋<span>{t.sellNav}</span></button><button>✉<span>{t.messages}</span></button><button>○<span>{t.profile}</span></button>
+      <Link className="active" href={`/${locale}`}>⌂<span>{t.home}</span></Link><button>⌕<span>{t.searchNav}</span></button>
+      <button className="sellFab">＋<span>{t.sellNav}</span></button><button>✉<span>{t.messages}</span></button><Link href={`/${locale}/profile`}>○<span>{t.profile}</span></Link>
     </nav>
   </main>;
 }
