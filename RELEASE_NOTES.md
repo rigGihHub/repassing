@@ -32,3 +32,9 @@ This release turns the existing organization foundation into a usable first pilo
 - Joining with a team-scoped code creates both club and team membership.
 - Platform-admin access is explicitly allowlisted through `REPASSING_PLATFORM_ADMIN_EMAILS`.
 - Raised supported Node.js floor to 22 to follow current Supabase client support.
+
+## v0.6.1.1 – Production resilience hotfix
+- Prevented homepage Supabase/search/session failures from crashing the entire public site.
+- Marketplace, reference data, favorites and notification count now fail independently and degrade safely.
+- Added a localized route error boundary with retry/home recovery.
+- Restored the broader Node 20–24 engine range; a runtime floor change is not justified as part of this feature release.

@@ -37,9 +37,35 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
     limit:48
   };
   const liveMode=runtimeConfig.dataMode==='supabase';
-  const [liveListings,referenceData,session]=liveMode?await Promise.all([searchMarketplaceListings(filters),getMarketplaceReferenceData(),getCurrentSession()]):[[],{organizations:[],teams:[],sports:[],categories:[],brands:[]},null];
-  const favoriteIds=session&&!session.preview?await getFavoriteListingIds(session.user.id):new Set<string>();
-  const unreadNotifications=session&&!session.preview?await getUnreadNotificationCount(session.user.id):0;
+  const emptyReferenceData={organizations:[],teams:[],sports:[],categories:[],brands:[]};
+  let liveListings:Awaited<ReturnType<typeof searchMarketplaceListings>>=[];
+  let referenceData:Awaited<ReturnType<typeof getMarketplaceReferenceData>>=emptyReferenceData;
+  let session:Awaited<ReturnType<typeof getCurrentSession>>=null;
+  if(liveMode){
+    const [listingsResult,referenceResult,sessionResult]=await Promise.allSettled([
+      searchMarketplaceListings(filters),
+      getMarketplaceReferenceData(),
+      getCurrentSession()
+    ]);
+    if(listingsResult.status==='fulfilled')liveListings=listingsResult.value;
+    else console.error('[home] marketplace search failed',listingsResult.reason);
+    if(referenceResult.status==='fulfilled')referenceData=referenceResult.value;
+    else console.error('[home] reference data failed',referenceResult.reason);
+    if(sessionResult.status==='fulfilled')session=sessionResult.value;
+    else console.error('[home] session lookup failed',sessionResult.reason);
+  }
+  let favoriteIds=new Set<string>();
+  let unreadNotifications=0;
+  if(session&&!session.preview){
+    const [favoritesResult,notificationsResult]=await Promise.allSettled([
+      getFavoriteListingIds(session.user.id),
+      getUnreadNotificationCount(session.user.id)
+    ]);
+    if(favoritesResult.status==='fulfilled')favoriteIds=favoritesResult.value;
+    else console.error('[home] favorites failed',favoritesResult.reason);
+    if(notificationsResult.status==='fulfilled')unreadNotifications=notificationsResult.value;
+    else console.error('[home] notification count failed',notificationsResult.reason);
+  }
   const hasLiveListings = liveListings.length > 0;
   const hasFilters=Boolean(filters.query||filters.organizationId||filters.teamId||filters.sportId||filters.categoryId||filters.brandId||filters.sizeLabel||filters.minPriceMinor!==undefined||filters.maxPriceMinor!==undefined);
   const qs=new URLSearchParams();Object.entries(sp).forEach(([k,v])=>{const value=first(v);if(value)qs.set(k,value);});const returnPath=`/${locale}${qs.size?`?${qs.toString()}`:''}`;
