@@ -1,9 +1,7 @@
-# Repassing v0.5.3.2 – Clean Production Recovery
+# Repassing v0.5.3.3 — Vercel build fix
 
-Complete clean replacement package based on the last known stable v0.5.3 code line.
-
-- Public home page no longer fails if marketplace, reference data, session, favorites or notification queries fail.
-- Marketplace listing fetch retries without embedded relationships if the enriched PostgREST select fails.
-- Listing detail uses the same safe fallback.
-- `.next` and `node_modules` are intentionally excluded.
-- No v0.6 pilot/admin code is included in this recovery release.
+- Fixes the exact TypeScript error reported by Vercel in `app/[locale]/page.tsx`.
+- Mock listing cards no longer depend on an `image` property during the production fallback render.
+- Mock prices now use the actual `Money` shape: `price.amountMinor` and `price.currency`.
+- Keeps the production resilience/fallback changes from v0.5.3.2.
+- Removes generated `tsconfig.tsbuildinfo` from the replacement package.
