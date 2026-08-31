@@ -1,7 +1,10 @@
-# Repassing v0.5.3.3 — Vercel build fix
+# Repassing v0.5.4 — Marketplace Simplification
 
-- Fixes the exact TypeScript error reported by Vercel in `app/[locale]/page.tsx`.
-- Mock listing cards no longer depend on an `image` property during the production fallback render.
-- Mock prices now use the actual `Money` shape: `price.amountMinor` and `price.currency`.
-- Keeps the production resilience/fallback changes from v0.5.3.2.
-- Removes generated `tsconfig.tsbuildinfo` from the replacement package.
+- Removes the hard-coded ÖSK Fotboll marketplace identity and derives club context from live data/filter state.
+- Makes the marketplace value proposition clearer for first-time visitors.
+- Collapses advanced marketplace filters behind a simple Filter control; active filters remain visible/open.
+- Adds a supply-focused empty state with a direct Sell action when the marketplace has no listings.
+- Simplifies the Sell flow: SEK is implicit, optional description/club/team/sport/category/brand fields are grouped under “More details”.
+- Removes developer-facing LIVE MARKETPLACE/Storage wording from the sell experience.
+- Changes mobile navigation from Favorites to Deals/Orders, while Favorites remain available in the header and marketplace.
+- No database migration.

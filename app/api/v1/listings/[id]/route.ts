@@ -5,8 +5,8 @@ const conditions=new Set(['NEW_WITH_TAGS','LIKE_NEW','GOOD','USED','WELL_USED'])
 const statuses=new Set(['ACTIVE','RESERVED','SOLD']);
 const optionalUuid=(value:FormDataEntryValue|null)=>{const text=typeof value==='string'?value.trim():'';return text||null;};
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
-  const {id}=await params;const session=await getCurrentSession();if(!session||session.preview)return NextResponse.redirect(new URL('/sv/login',request.url),303);
-  const form=await request.formData();const locale=String(form.get('locale')??'sv')==='en'?'en':'sv';const intent=String(form.get('intent')??'');const supabase=await createSupabaseServerClient();
+  const {id}=await params;const form=await request.formData();const locale=String(form.get('locale')??'sv')==='en'?'en':'sv';const session=await getCurrentSession();if(!session||session.preview)return NextResponse.redirect(new URL(`/${locale}/login?next=/${locale}/listings/${id}`,request.url),303);
+  const intent=String(form.get('intent')??'');const supabase=await createSupabaseServerClient();
   const {data:listing,error:readError}=await supabase.from('listings').select('id,seller_user_id,status').eq('id',id).maybeSingle();
   if(readError||!listing||listing.seller_user_id!==session.user.id)return NextResponse.redirect(new URL(`/${locale}/profile`,request.url),303);
   if(intent==='remove'){

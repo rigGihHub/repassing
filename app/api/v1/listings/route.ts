@@ -10,11 +10,10 @@ function optionalUuid(value: FormDataEntryValue | null) {
 }
 
 export async function POST(request: Request) {
-  const session = await getCurrentSession();
-  if (!session || session.preview) return NextResponse.redirect(new URL('/sv/login', request.url), 303);
-
   const form = await request.formData();
   const locale = String(form.get('locale') ?? 'sv') === 'en' ? 'en' : 'sv';
+  const session = await getCurrentSession();
+  if (!session || session.preview) return NextResponse.redirect(new URL(`/${locale}/login?next=/${locale}/sell`, request.url), 303);
   const title = String(form.get('title') ?? '').trim();
   const description = String(form.get('description') ?? '').trim();
   const sizeLabel = String(form.get('size_label') ?? '').trim();

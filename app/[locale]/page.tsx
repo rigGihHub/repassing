@@ -40,6 +40,7 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
   let liveListings: Awaited<ReturnType<typeof searchMarketplaceListings>> = [];
   let referenceData: Awaited<ReturnType<typeof getMarketplaceReferenceData>> = {organizations:[],teams:[],sports:[],categories:[],brands:[]};
   let session: Awaited<ReturnType<typeof getCurrentSession>> = null;
+  let marketplaceUnavailable = false;
 
   if (liveMode) {
     const [listingsResult, referenceResult, sessionResult] = await Promise.allSettled([
@@ -48,7 +49,7 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
       getCurrentSession()
     ]);
     if (listingsResult.status === 'fulfilled') liveListings = listingsResult.value;
-    else console.error('Marketplace listings unavailable on home page', listingsResult.reason);
+    else { marketplaceUnavailable = true; console.error('Marketplace listings unavailable on home page', listingsResult.reason); }
     if (referenceResult.status === 'fulfilled') referenceData = referenceResult.value;
     else console.error('Marketplace reference data unavailable on home page', referenceResult.reason);
     if (sessionResult.status === 'fulfilled') session = sessionResult.value;
@@ -68,6 +69,8 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
     else console.error('Notification count unavailable on home page', notificationResult.reason);
   }
   const hasLiveListings = liveListings.length > 0;
+  const activeOrganization = referenceData.organizations.find((organization)=>organization.id===filters.organizationId);
+  const clubLabel = activeOrganization?.name ?? (svLocale?'Alla föreningar':'All clubs');
   const hasFilters=Boolean(filters.query||filters.organizationId||filters.teamId||filters.sportId||filters.categoryId||filters.brandId||filters.sizeLabel||filters.minPriceMinor!==undefined||filters.maxPriceMinor!==undefined);
   const qs=new URLSearchParams();Object.entries(sp).forEach(([k,v])=>{const value=first(v);if(value)qs.set(k,value);});const returnPath=`/${locale}${qs.size?`?${qs.toString()}`:''}`;
 
@@ -76,7 +79,7 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
       <Link href={`/${locale}`} className="brand" aria-label="Repassing home"><Image src="/brand/repassing-logo.png" width={220} height={124} alt="Repassing" priority /></Link>
       <form className="desktopSearch" action={`/${locale}`} method="get"><span>⌕</span><input name="q" defaultValue={filters.query} aria-label={t.search} placeholder={t.search}/><button className="searchSubmit" type="submit">{svLocale?'Sök':'Search'}</button></form>
       <div className="headerActions">
-        <Link className="clubPicker" href={`/${locale}/clubs`}><span className="clubDot"/>ÖSK Fotboll <span>⌄</span></Link>
+        <Link className="clubPicker" href={`/${locale}/clubs`}><span className="clubDot"/>{activeOrganization?.name ?? (svLocale?'Föreningar':'Clubs')} <span>⌄</span></Link>
         <Link className="lang" href={locale==='sv'?'/en':'/sv'}>{locale==='sv'?'EN':'SV'}</Link>
         <Link className="iconButton notificationHeaderButton" href={`/${locale}/notifications`} aria-label={svLocale?'Notifieringar':'Notifications'}>♢{unreadNotifications>0&&<span>{unreadNotifications}</span>}</Link>
         <Link className="iconButton favoritesHeaderButton" href={`/${locale}/favorites`} aria-label={t.favorites}>{favoriteIds.size?'♥':'♡'}{favoriteIds.size>0&&<span>{favoriteIds.size}</span>}</Link>
@@ -85,27 +88,30 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
     </header>
 
     <section className="marketHero">
-      <div className="marketHeroCopy"><span className="eyebrow">{t.club}</span><h1>{t.headline}</h1><p>{t.subheadline}</p><div className="heroActions"><Link className="primary inlineAction" href={`/${locale}/sell`}>＋ {t.sell}</Link><a className="secondary inlineAction" href="#marketplace-grid">{t.browse}</a></div></div>
-      <div className="impactCard"><span className="impactLabel">{svLocale?'TRÄFFAR':'MATCHES'}</span><strong>{liveListings.length}</strong><p>{hasFilters?(svLocale?'annonser matchar din sökning':'listings match your search'):(svLocale?'aktiva annonser i marknaden just nu':'active listings in the marketplace right now')}</p></div>
+      <div className="marketHeroCopy"><span className="eyebrow">{clubLabel}</span><h1>{t.headline}</h1><p>{t.subheadline}</p><div className="heroActions"><Link className="primary inlineAction" href={`/${locale}/sell`}>＋ {t.sell}</Link><a className="secondary inlineAction" href="#marketplace-grid">{t.browse}</a></div></div>
+      <div className="impactCard"><span className="impactLabel">{svLocale?'TRÄFFAR':'MATCHES'}</span><strong>{marketplaceUnavailable?'—':liveListings.length}</strong><p>{marketplaceUnavailable?(svLocale?'Marknadsdata kunde inte hämtas just nu':'Marketplace data is temporarily unavailable'):hasFilters?(svLocale?'annonser matchar din sökning':'listings match your search'):(svLocale?'aktiva annonser i marknaden just nu':'active listings in the marketplace right now')}</p></div>
     </section>
 
     <section className="content">
       <form className="mobileSearch" action={`/${locale}`} method="get"><span>⌕</span><input name="q" defaultValue={filters.query} aria-label={t.search} placeholder={t.search}/><button className="searchSubmit" type="submit">{svLocale?'Sök':'Search'}</button></form>
-      <form className="marketFilters" action={`/${locale}`} method="get">
-        {filters.query&&<input type="hidden" name="q" value={filters.query}/>} 
-        <label><span>{svLocale?'Förening':'Club'}</span><select name="organization" defaultValue={filters.organizationId??''}><option value="">{svLocale?'Alla föreningar':'All clubs'}</option>{referenceData.organizations.map(o=><option value={o.id} key={o.id}>{o.name}</option>)}</select></label>
-        <label><span>{svLocale?'Sport':'Sport'}</span><select name="sport" defaultValue={filters.sportId??''}><option value="">{svLocale?'Alla sporter':'All sports'}</option>{referenceData.sports.map(s=><option value={s.id} key={s.id}>{cleanKey(s.nameKey)??s.code}</option>)}</select></label>
-        <label><span>{svLocale?'Kategori':'Category'}</span><select name="category" defaultValue={filters.categoryId??''}><option value="">{svLocale?'Alla kategorier':'All categories'}</option>{referenceData.categories.map(c=><option value={c.id} key={c.id}>{cleanKey(c.nameKey)??c.code}</option>)}</select></label>
-        <label><span>{svLocale?'Storlek':'Size'}</span><input name="size" defaultValue={filters.sizeLabel??''} placeholder={svLocale?'t.ex. 152 eller M':'e.g. 152 or M'}/></label>
-        <label><span>{svLocale?'Pris från':'Price from'}</span><input name="minPrice" inputMode="numeric" defaultValue={first(sp.minPrice)??''} placeholder="0"/></label>
-        <label><span>{svLocale?'Pris till':'Price to'}</span><input name="maxPrice" inputMode="numeric" defaultValue={first(sp.maxPrice)??''} placeholder="1000"/></label>
-        <button className="primary filterApply" type="submit">{svLocale?'Filtrera':'Filter'}</button>
-        {hasFilters&&<Link className="secondary filterReset" href={`/${locale}`}>{svLocale?'Rensa':'Clear'}</Link>}
-      </form>
+      <details className="filterDisclosure" open={hasFilters}>
+        <summary><span>{svLocale?'Filter':'Filters'}</span>{hasFilters&&<b>{svLocale?'Aktiva':'Active'}</b>}<span className="filterChevron">⌄</span></summary>
+        <form className="marketFilters" action={`/${locale}`} method="get">
+          {filters.query&&<input type="hidden" name="q" value={filters.query}/>}
+          <label><span>{svLocale?'Förening':'Club'}</span><select name="organization" defaultValue={filters.organizationId??''}><option value="">{svLocale?'Alla föreningar':'All clubs'}</option>{referenceData.organizations.map(o=><option value={o.id} key={o.id}>{o.name}</option>)}</select></label>
+          <label><span>{svLocale?'Sport':'Sport'}</span><select name="sport" defaultValue={filters.sportId??''}><option value="">{svLocale?'Alla sporter':'All sports'}</option>{referenceData.sports.map(s=><option value={s.id} key={s.id}>{cleanKey(s.nameKey)??s.code}</option>)}</select></label>
+          <label><span>{svLocale?'Kategori':'Category'}</span><select name="category" defaultValue={filters.categoryId??''}><option value="">{svLocale?'Alla kategorier':'All categories'}</option>{referenceData.categories.map(c=><option value={c.id} key={c.id}>{cleanKey(c.nameKey)??c.code}</option>)}</select></label>
+          <label><span>{svLocale?'Storlek':'Size'}</span><input name="size" defaultValue={filters.sizeLabel??''} placeholder={svLocale?'t.ex. 152 eller M':'e.g. 152 or M'}/></label>
+          <label><span>{svLocale?'Pris från':'Price from'}</span><input name="minPrice" inputMode="numeric" defaultValue={first(sp.minPrice)??''} placeholder="0"/></label>
+          <label><span>{svLocale?'Pris till':'Price to'}</span><input name="maxPrice" inputMode="numeric" defaultValue={first(sp.maxPrice)??''} placeholder="1000"/></label>
+          <button className="primary filterApply" type="submit">{svLocale?'Visa resultat':'Show results'}</button>
+          {hasFilters&&<Link className="secondary filterReset" href={`/${locale}`}>{svLocale?'Rensa':'Clear'}</Link>}
+        </form>
+      </details>
 
       <div className="sectionHead"><div><span className="eyebrow">{hasFilters?(svLocale?'SÖKRESULTAT':'SEARCH RESULTS'):t.inClub}</span><h2>{hasFilters?(svLocale?`${liveListings.length} träffar`:`${liveListings.length} matches`):t.latest}</h2></div><Link className="textButton browseFavorites" href={`/${locale}/favorites`}>{svLocale?'Mina favoriter':'My favorites'} →</Link></div>
 
-      {liveMode&&hasFilters&&!hasLiveListings?<section className="emptyState"><strong>{svLocale?'Inga annonser matchade':'No listings matched'}</strong><p>{svLocale?'Prova att ta bort något filter eller sök med ett bredare ord.':'Try removing a filter or using a broader search term.'}</p><Link className="primary inlineAction" href={`/${locale}`}>{svLocale?'Visa alla annonser':'Show all listings'}</Link></section>:<div className="grid" id="marketplace-grid">
+      {liveMode&&marketplaceUnavailable?<section className="emptyState"><strong>{svLocale?'Marknaden kunde inte laddas':'Marketplace unavailable'}</strong><p>{svLocale?'Försök igen om en stund. Övriga delar av Repassing fungerar fortfarande.':'Please try again shortly. The rest of Repassing is still available.'}</p><Link className="primary inlineAction" href={`/${locale}`}>{svLocale?'Försök igen':'Try again'}</Link></section>:liveMode&&hasFilters&&!hasLiveListings?<section className="emptyState"><strong>{svLocale?'Inga annonser matchade':'No listings matched'}</strong><p>{svLocale?'Prova att ta bort något filter eller sök med ett bredare ord.':'Try removing a filter or using a broader search term.'}</p><Link className="primary inlineAction" href={`/${locale}`}>{svLocale?'Visa alla annonser':'Show all listings'}</Link></section>:liveMode&&!hasFilters&&!hasLiveListings?<section className="emptyState supplyEmpty" id="marketplace-grid"><strong>{svLocale?'Bli först att lägga upp något':'Be the first to list something'}</strong><p>{svLocale?'Har du sportkläder eller utrustning som inte längre används? Lägg upp det så kan någon annan i sporten få nytta av det.':'Got sportswear or equipment that is no longer used? List it so someone else can put it to use.'}</p><Link className="primary inlineAction" href={`/${locale}/sell`}>＋ {svLocale?'Sälj något':'Sell something'}</Link></section>:<div className="grid" id="marketplace-grid">
         {hasLiveListings ? liveListings.map((p)=>{const favorite=favoriteIds.has(p.id);return <article className="card" key={p.id}>
           <Link className="productImage livePlaceholder cardImageLink" href={`/${locale}/listings/${p.id}`}>{p.imageUrl ? <img src={p.imageUrl} alt={p.title}/> : <span>RE</span>}</Link>
           <form action={`/api/v1/favorites/${p.id}`} method="post"><input type="hidden" name="locale" value={locale}/><input type="hidden" name="redirect_to" value={returnPath}/><button className={`heart ${favorite?'favoriteActive':''}`} aria-label={favorite?(svLocale?'Ta bort favorit':'Remove favorite'):t.favorite}>{favorite?'♥':'♡'}</button></form>
@@ -116,6 +122,6 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
       <section className="valueStrip"><div><strong>{t.valueLocal}</strong><span>{t.valueLocalText}</span></div><div><strong>{t.valueFast}</strong><span>{t.valueFastText}</span></div><div><strong>{t.valueCircular}</strong><span>{t.valueCircularText}</span></div></section>
     </section>
 
-    <nav className="bottomNav" aria-label="Huvudnavigation"><Link className="active" href={`/${locale}`}>⌂<span>{t.home}</span></Link><a href="#marketplace-grid">⌕<span>{t.searchNav}</span></a><Link className="sellFab" href={`/${locale}/sell`}>＋<span>{t.sellNav}</span></Link><Link href={`/${locale}/favorites`}>{favoriteIds.size?'♥':'♡'}<span>{svLocale?'Favoriter':'Favorites'}</span></Link><Link href={`/${locale}/profile`}>○<span>{t.profile}</span></Link></nav>
+    <nav className="bottomNav" aria-label={svLocale?'Huvudnavigation':'Main navigation'}><Link className="active" href={`/${locale}`}>⌂<span>{t.home}</span></Link><a href="#marketplace-grid">⌕<span>{t.searchNav}</span></a><Link className="sellFab" href={`/${locale}/sell`}>＋<span>{t.sellNav}</span></Link><Link href={`/${locale}/orders`}>⇄<span>{svLocale?'Affärer':'Deals'}</span></Link><Link href={`/${locale}/profile`}>○<span>{t.profile}</span></Link></nav>
   </main>;
 }
