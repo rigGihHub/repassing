@@ -1,7 +1,9 @@
-# Repassing v0.5.3.1 – Emergency production recovery
+# Repassing v0.5.3.2 – Clean Production Recovery
 
-- Based on the last known-good v0.5.3 production code line.
-- Makes marketplace listing loading fail-safe on the public homepage.
-- Also isolates reference data, session, favorites and notification-count failures so they cannot crash the homepage.
-- Temporarily excludes the unverified v0.6.0/v0.6.1 pilot-club additions while their build failure is investigated separately.
-- No database migration is required for this recovery release.
+Complete clean replacement package based on the last known stable v0.5.3 code line.
+
+- Public home page no longer fails if marketplace, reference data, session, favorites or notification queries fail.
+- Marketplace listing fetch retries without embedded relationships if the enriched PostgREST select fails.
+- Listing detail uses the same safe fallback.
+- `.next` and `node_modules` are intentionally excluded.
+- No v0.6 pilot/admin code is included in this recovery release.

@@ -50,6 +50,7 @@ export type MarketplaceSearchFilters = {
 };
 
 const listingSelect = 'id,seller_user_id,title,description,size_label,condition,price_minor,currency,status,published_at,reserved_at,sold_at,organization_id,team_id,sport_id,category_id,brand_id,organization:organizations(name),team:teams(name),category:categories(name_key),sport:sports(name_key),brand:brands(name),images:listing_images(storage_bucket,storage_path,sort_order)';
+const basicListingSelect = 'id,seller_user_id,title,description,size_label,condition,price_minor,currency,status,published_at,reserved_at,sold_at,organization_id,team_id,sport_id,category_id,brand_id';
 
 function mapListing(row: any, supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>): MarketplaceListing {
   const imageUrls = (row.images ?? [])
@@ -108,7 +109,14 @@ export async function searchMarketplaceListings(filters: MarketplaceSearchFilter
   const filteredHits = normalizedSize ? (hits ?? []).filter((hit:any)=>String(hit.size_label ?? '').trim().toLocaleLowerCase() === normalizedSize) : (hits ?? []);
   const ids = filteredHits.map((hit:any)=>hit.id as string);
   if (!ids.length) return [];
-  const {data, error} = await supabase.from('listings').select(listingSelect).in('id', ids);
+  let {data, error} = await supabase.from('listings').select(listingSelect).in('id', ids);
+  if (error) {
+    // A relationship/embed problem must never take the public marketplace down.
+    // Retry with the listing's own columns; related labels/images are optional enrichment.
+    const fallback = await supabase.from('listings').select(basicListingSelect).in('id', ids);
+    data = fallback.data as any;
+    error = fallback.error as any;
+  }
   if (error) throw new Error(`Could not load marketplace listings: ${error.message}`);
   const byId = new Map((data ?? []).map((row:any)=>[row.id, mapListing(row,supabase)]));
   return ids.map((id:string)=>byId.get(id)).filter(Boolean) as MarketplaceListing[];
@@ -116,7 +124,12 @@ export async function searchMarketplaceListings(filters: MarketplaceSearchFilter
 
 export async function getMarketplaceListing(id: string): Promise<MarketplaceListing | null> {
   const supabase = await createSupabaseServerClient();
-  const {data, error} = await supabase.from('listings').select(listingSelect).eq('id', id).maybeSingle();
+  let {data, error} = await supabase.from('listings').select(listingSelect).eq('id', id).maybeSingle();
+  if (error) {
+    const fallback = await supabase.from('listings').select(basicListingSelect).eq('id', id).maybeSingle();
+    data = fallback.data as any;
+    error = fallback.error as any;
+  }
   if (error) throw new Error(`Could not load marketplace listing: ${error.message}`);
   return data ? mapListing(data,supabase) : null;
 }

@@ -37,13 +37,36 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
     limit:48
   };
   const liveMode=runtimeConfig.dataMode==='supabase';
-  const [liveListings,referenceData,session]=liveMode?await Promise.all([
-    searchMarketplaceListings(filters).catch((error)=>{console.error('[home] marketplace search failed',error);return [];}),
-    getMarketplaceReferenceData().catch((error)=>{console.error('[home] reference data failed',error);return {organizations:[],teams:[],sports:[],categories:[],brands:[]};}),
-    getCurrentSession().catch((error)=>{console.error('[home] session lookup failed',error);return null;})
-  ]):[[],{organizations:[],teams:[],sports:[],categories:[],brands:[]},null];
-  const favoriteIds=session&&!session.preview?await getFavoriteListingIds(session.user.id).catch((error)=>{console.error('[home] favorites failed',error);return new Set<string>();}):new Set<string>();
-  const unreadNotifications=session&&!session.preview?await getUnreadNotificationCount(session.user.id).catch((error)=>{console.error('[home] notification count failed',error);return 0;}):0;
+  let liveListings: Awaited<ReturnType<typeof searchMarketplaceListings>> = [];
+  let referenceData: Awaited<ReturnType<typeof getMarketplaceReferenceData>> = {organizations:[],teams:[],sports:[],categories:[],brands:[]};
+  let session: Awaited<ReturnType<typeof getCurrentSession>> = null;
+
+  if (liveMode) {
+    const [listingsResult, referenceResult, sessionResult] = await Promise.allSettled([
+      searchMarketplaceListings(filters),
+      getMarketplaceReferenceData(),
+      getCurrentSession()
+    ]);
+    if (listingsResult.status === 'fulfilled') liveListings = listingsResult.value;
+    else console.error('Marketplace listings unavailable on home page', listingsResult.reason);
+    if (referenceResult.status === 'fulfilled') referenceData = referenceResult.value;
+    else console.error('Marketplace reference data unavailable on home page', referenceResult.reason);
+    if (sessionResult.status === 'fulfilled') session = sessionResult.value;
+    else console.error('Session unavailable on home page', sessionResult.reason);
+  }
+
+  let favoriteIds = new Set<string>();
+  let unreadNotifications = 0;
+  if (session && !session.preview) {
+    const [favoriteResult, notificationResult] = await Promise.allSettled([
+      getFavoriteListingIds(session.user.id),
+      getUnreadNotificationCount(session.user.id)
+    ]);
+    if (favoriteResult.status === 'fulfilled') favoriteIds = favoriteResult.value;
+    else console.error('Favorites unavailable on home page', favoriteResult.reason);
+    if (notificationResult.status === 'fulfilled') unreadNotifications = notificationResult.value;
+    else console.error('Notification count unavailable on home page', notificationResult.reason);
+  }
   const hasLiveListings = liveListings.length > 0;
   const hasFilters=Boolean(filters.query||filters.organizationId||filters.teamId||filters.sportId||filters.categoryId||filters.brandId||filters.sizeLabel||filters.minPriceMinor!==undefined||filters.maxPriceMinor!==undefined);
   const qs=new URLSearchParams();Object.entries(sp).forEach(([k,v])=>{const value=first(v);if(value)qs.set(k,value);});const returnPath=`/${locale}${qs.size?`?${qs.toString()}`:''}`;
