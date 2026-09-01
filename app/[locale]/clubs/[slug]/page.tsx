@@ -2,6 +2,7 @@ import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {getOrganizationBySlug} from '@/src/modules/organizations/application/get-memberships';
 import {platformConfig} from '@/src/shared/config/platform';
+import {organizationRoleLabel} from '@/src/modules/organizations/application/organization-ui';
 
 export default async function ClubPage({params}: {params: Promise<{locale: string;slug: string}>}) {
   const {locale, slug} = await params;
@@ -10,5 +11,15 @@ export default async function ClubPage({params}: {params: Promise<{locale: strin
   if (!membership) notFound();
   const sv = locale === 'sv';
   const club = membership.organization;
-  return <main className="accountShell"><div className="accountTop"><Link href={`/${locale}/clubs`}>← {sv?'Mina föreningar':'My organizations'}</Link></div><section className="clubHero"><div><span className="eyebrow">{club.type}</span><h1>{club.name}</h1><p>{sv?'Föreningsyta och marknadskontext.':'Organization workspace and marketplace context.'}</p></div><div className="rolePill">{membership.role}</div></section><div className="accountGrid"><section className="accountPanel"><h2>{sv?'Organisation':'Organization'}</h2><dl className="facts"><div><dt>Slug</dt><dd>{club.slug}</dd></div><div><dt>{sv?'Land':'Country'}</dt><dd>{club.countryCode}</dd></div><div><dt>{sv?'Valuta':'Currency'}</dt><dd>{club.defaultCurrency}</dd></div><div><dt>{sv?'Språk':'Locale'}</dt><dd>{club.locale}</dd></div></dl></section><section className="accountPanel"><h2>{sv?'Lag':'Teams'}</h2>{membership.teamNames.length?<div className="teamTags">{membership.teamNames.map((name)=><span key={name}>{name}</span>)}</div>:<p>{sv?'Inga lag kopplade till detta medlemskap ännu.':'No teams linked to this membership yet.'}</p>}<p className="panelNote">{sv?'Nästa lager kopplar riktig databas, inbjudningar och behörighetskontroller till dessa domänobjekt.':'The next layer connects the real database, invitations and authorization checks to these domain objects.'}</p></section></div></main>;
+  const canAdmin = membership.role === 'CLUB_ADMIN' || membership.role === 'ORG_OWNER';
+  const roleLabel = organizationRoleLabel(membership.role, sv);
+
+  return <main className="accountShell">
+    <div className="accountTop"><Link href={`/${locale}/clubs`}>← {sv ? 'Mina föreningar' : 'My clubs'}</Link>{canAdmin && <Link className="inlineAction" href={`/${locale}/clubs/${slug}/admin`}>{sv ? 'Hantera föreningen' : 'Manage club'} →</Link>}</div>
+    <section className="clubHero"><div><span className="eyebrow">{sv ? 'Förening' : 'Club'}</span><h1>{club.name}</h1><p>{sv ? 'Din föreningsyta på Repassing.' : 'Your club space on Repassing.'}</p><div className="clubHeroActions"><Link className="clubHeroPrimary" href={`/${locale}?organization=${club.id}#marketplace-grid`}>{sv ? 'Visa föreningens marknad' : 'View club marketplace'}</Link><Link className="clubHeroSecondary" href={`/${locale}/sell?organization=${club.id}`}>＋ {sv ? 'Sälj i föreningen' : 'Sell in this club'}</Link></div></div><div className="rolePill">{roleLabel}</div></section>
+    <div className="accountGrid">
+      <section className="accountPanel"><h2>{sv ? 'Föreningen' : 'Club'}</h2><dl className="facts"><div><dt>{sv ? 'Land' : 'Country'}</dt><dd>{club.countryCode}</dd></div><div><dt>{sv ? 'Valuta' : 'Currency'}</dt><dd>{club.defaultCurrency}</dd></div></dl></section>
+      <section className="accountPanel"><h2>{sv ? 'Lag' : 'Teams'}</h2>{membership.teamNames.length ? <div className="teamTags">{membership.teamNames.map((name) => <span key={name}>{name}</span>)}</div> : <p>{sv ? 'Inga lag är kopplade till ditt medlemskap ännu.' : 'No teams are linked to your membership yet.'}</p>}</section>
+    </div>
+  </main>;
 }
