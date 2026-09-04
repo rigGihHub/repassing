@@ -5,6 +5,8 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const locale = url.searchParams.get('locale') === 'en' ? 'en' : 'sv';
+  const rawNext = url.searchParams.get('next') ?? '';
+  const safeNext = rawNext.startsWith(`/${locale}/`) && !rawNext.startsWith('//') ? rawNext : `/${locale}/profile`;
   if (!code) return NextResponse.redirect(new URL(`/${locale}/login?error=missing-code`, request.url));
 
   const supabase = await createSupabaseServerClient();
@@ -13,5 +15,5 @@ export async function GET(request: NextRequest) {
 
   // public.users + identity_accounts are bootstrapped by a hardened database trigger
   // on auth.users. The application never needs a service-role key for onboarding.
-  return NextResponse.redirect(new URL(`/${locale}/profile`, request.url));
+  return NextResponse.redirect(new URL(safeNext, request.url));
 }

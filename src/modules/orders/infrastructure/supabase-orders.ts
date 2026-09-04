@@ -17,6 +17,18 @@ export async function getOrdersForUser(userId:string, limit=50):Promise<Marketpl
   return (data??[]).map((row:any)=>mapOrder(row,supabase));
 }
 
+
+export async function getCompletedDealCountForUser(userId:string):Promise<number>{
+  const supabase=await createSupabaseServerClient();
+  const {count,error}=await supabase
+    .from('orders')
+    .select('id',{count:'exact',head:true})
+    .or(`buyer_user_id.eq.${userId},seller_user_id.eq.${userId}`)
+    .eq('status','COMPLETED');
+  if(error) throw new Error(`Could not count completed deals: ${error.message}`);
+  return count ?? 0;
+}
+
 export async function getOrderForUser(orderId:string,userId:string):Promise<MarketplaceOrder|null>{
   const supabase=await createSupabaseServerClient();
   const {data,error}=await supabase.from('orders').select(select).eq('id',orderId).maybeSingle();

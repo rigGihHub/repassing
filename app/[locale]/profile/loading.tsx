@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="accountShell loadingShell" aria-busy="true"><div className="skeleton skeletonLine skeletonShort"/><div className="skeleton skeletonHero"/><div className="skeleton skeletonTabs"/><div className="skeletonAccountGrid"><div className="skeleton skeletonPanel"/><div className="skeleton skeletonPanel"/></div></main>}

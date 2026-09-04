@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   const locale = String(formData.get('locale') ?? 'sv') === 'en' ? 'en' : 'sv';
+  const rawNext = String(formData.get('next') ?? '').trim();
+  const safeNext = rawNext.startsWith(`/${locale}/`) && !rawNext.startsWith('//') ? rawNext : `/${locale}/profile`;
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.redirect(new URL(`/${locale}/login?error=invalid-email`, request.url), 303);
   }
@@ -17,12 +19,13 @@ export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const callbackUrl = new URL('/api/v1/auth/callback', runtimeConfig.appUrl);
   callbackUrl.searchParams.set('locale', locale);
+  callbackUrl.searchParams.set('next', safeNext);
 
   const {error} = await supabase.auth.signInWithOtp({
     email,
     options: {emailRedirectTo: callbackUrl.toString(), shouldCreateUser: true}
   });
 
-  if (error) return NextResponse.redirect(new URL(`/${locale}/login?error=send-failed`, request.url), 303);
-  return NextResponse.redirect(new URL(`/${locale}/login?sent=1`, request.url), 303);
+  if (error) return NextResponse.redirect(new URL(`/${locale}/login?error=send-failed&next=${encodeURIComponent(safeNext)}`, request.url), 303);
+  return NextResponse.redirect(new URL(`/${locale}/login?sent=1&next=${encodeURIComponent(safeNext)}`, request.url), 303);
 }

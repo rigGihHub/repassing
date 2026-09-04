@@ -1,97 +1,118 @@
-# v0.6.0.6 — Visible version hotfix
+# Repassing v0.6.4.0 — Rensa garderoben, lätt version
 
-- Versionsnumret visas nu alltid som en diskret fast etikett nere till höger, i stället för först längst ned efter allt sidinnehåll.
-- På mobil placeras etiketten ovanför den fasta bottennavigationen.
-- UI-versionen hämtas direkt från `package.json`, så samma källa används av npm och den synliga versionsetiketten.
-- `package.json` och `VERSION` uppdaterade till 0.6.0.6.
-- Ingen databasändring eller migration.
+- Efter publicering visas en tydlig **Sälj en till**-väg.
+- Nästa annons kan återanvända förening, lag och sport från den nyss publicerade annonsen.
+- Bilder, rubrik, pris, storlek, skick och beskrivning återanvänds inte; varje produkt ska fortfarande beskrivas korrekt.
+- Återanvändning sker bara när den inloggade användaren äger källannonsen.
+- Magic-link-vägen bevarar `again`-parametern så användaren kommer tillbaka till samma snabba flöde efter inloggning.
+- Ingen ny databas-migration i denna release.
 
-# Repassing v0.6.0.5 — Club marketplace bridge
+# v0.6.3.9 — Low-supply Marketplace Activation
 
-## Förändringar
-- Föreningssidan har nu tydliga vägar direkt till föreningens filtrerade marknad och till säljflödet.
-- `Sälj i föreningen` förväljer aktuell förening i annonsformuläret och förklarar vilket val som gjorts.
-- Avancerade annonsuppgifter öppnas automatiskt när en förening är förvald, så valet är synligt och enkelt att ändra.
-- Inloggning från säljflödet behåller både returvägen och eventuell förvald förening.
-- Okända eller ogiltiga förenings-ID:n ignoreras säkert och ger normalt säljflöde.
-- Ingen ny databasändring eller migration.
+- Makes an empty marketplace actionable without fake listings or demo inventory.
+- Empty state now explains the minimum sell flow: photo → price → publish.
+- When the live marketplace has 1–10 unfiltered listings, a compact supply-growth prompt appears above the grid instead of another large empty-state panel.
+- Sell CTAs preserve the selected organization context when one is active.
+- Keeps search-result empty states focused on broadening the search rather than pushing unrelated actions.
+- No database changes.
 
-## Verifiering
-- Versionskedjan och ZIP-strukturen är kontrollerade i arbetsmiljön.
-- Full `npm install` / `npm run build` har inte verifierats i denna arbetsmiljö.
+# v0.6.3.8 – Deal Conversation Integration
 
----
+- Brings the latest deal messages directly into the order page so handoff coordination no longer feels like a separate subsystem.
+- Shows only the latest three messages on the deal page to keep the page focused and avoid loading the full conversation thread.
+- Adds an inline secondary message composer with a concrete handoff-oriented prompt.
+- Keeps the full chat available as a secondary link for longer conversations.
+- Message POSTs can safely return to the same order page; external/open redirect paths are rejected.
+- Login redirects preserve the intended return path when a session has expired.
+- Server still enforces conversation participation through the existing `send_conversation_message` RPC.
+- Message length is capped server-side as well as in the UI.
+- Adds three regression tests for deal-integrated messaging, safe return paths and server-side message constraints.
+- No database migration in this release.
 
-# v0.6.0.4 — Club Pilot flow clarity
+# v0.6.3.6 – Slow Network & Upload Recovery
 
-- Adds a compact three-step explanation before the club application form so users know what happens after submitting.
-- Clarifies that the application is free and creates no subscription or commitment.
-- Centralizes human-readable organization role and application status labels to avoid UI drift between club pages.
-- Adds a safe neutral visual state for unknown/future application statuses instead of deriving CSS classes from database values.
-- Gives users a specific message when their login session expires during application submission.
-- Improves form busy-state semantics and mobile presentation of the application steps.
-- No database schema changes and no new migration.
+- Enhances the sell form progressively: normal multipart form POST still works without JavaScript, while JavaScript-capable browsers use a structured upload flow.
+- Shows real browser-to-server upload percentage while photos are being sent.
+- Changes to a separate “saving and publishing” state after the upload bytes have reached the server, avoiding a misleading frozen button on slow connections.
+- Detects offline state before sending large photos.
+- Rejects more than 6 photos or photos above 10 MB client-side before wasting bandwidth; server validation remains authoritative.
+- Warns against accidental navigation while an upload/publication is still in progress.
+- Handles interrupted requests with explicit guidance that the user should check whether the listing was published before retrying, reducing duplicate-listing risk after an uncertain network failure.
+- Keeps selected photos available for retry while the user remains on the sell page after a recoverable image/server error.
+- Adds a structured JSON response mode to the listing endpoint for enhanced submits while retaining 303 redirects for the plain HTML form fallback.
+- Adds four regression tests for progress reporting, offline/interruption handling, preflight image validation and progressive enhancement.
+- No new database migration in this release.
 
-# v0.6.0.3 — Club Pilot clarity polish
+# v0.6.3.5 – Actionable Deal Errors
 
-- Human-readable club roles replace internal role codes in the club UI.
-- Application cards now show submitted date and decision note when available.
-- Temporary application-loading errors include a retry action.
-- Application success state now links directly to My clubs or the marketplace.
-- Optional website input is validated server-side as http(s).
-- Club admin copy no longer exposes internal roadmap wording.
-- No database schema changes and no new migration.
+- Replaces generic purchase errors with clear reasons: unavailable item, own listing, expired/invalid session context, oversized message or temporary failure.
+- Handoff errors now distinguish stale deal state, wrong participant, invalid action, invalid date/time and temporary infrastructure failure.
+- Invalid handoff dates are rejected before any database RPC is called instead of risking a server exception.
+- Cancellation errors now distinguish an already-confirmed physical handoff from a deal whose status changed in another tab/device.
+- Login redirects from handoff/cancel preserve the exact order page as `next`.
+- Adds regression coverage for the error mapping and invalid-date guard.
+- No database migration in this release.
 
-# v0.6.0.2 — Club Pilot UX & safety polish
+# v0.6.3.4 – Cancel & Reopen Safety
 
-- Förbättrar föreningsansökan med tydligare validering, autokomplettering, mobilvänliga fält och robust nätverksfelhantering.
-- Hindrar dubbla pågående ansökningar från samma användare till samma föreningsnamn.
-- Visar begripliga statusetiketter för ansökningar och en separat driftstörningsvy i stället för att dölja fel.
-- Lägger till ett tydligt tomläge när användaren ännu inte har en ansluten förening eller ansökan.
-- Bevarar locale i login-redirects även för Mina föreningar och föreningsadmin.
-- Föreningsvyn visar adminlänk endast för CLUB_ADMIN/ORG_OWNER och tar bort teknisk interncopy.
-- Städning: tar bort `any` i ansökningsmappningen.
-- Ingen ny databasstruktur eller ny migration. Den befintliga v0.6.0.1-policy-migrationen gäller fortfarande.
+- Avbruten reservation/lokal affär återöppnar annonsen när överlämning ännu inte bekräftats.
+- Avbryt fungerar även i FULFILLMENT_PENDING när ingen part har bekräftat överlämningen.
+- När någon redan bekräftat fysisk överlämning blockeras enkel avbokning för att undvika felaktig återpublicering.
+- Upprepade cancel-anrop är idempotenta.
+- Ordervyn förklarar att annonsen blir tillgänglig igen.
+- Regressionstester för cancel/reopen-flödet.
+- Ny migration: `20260903183000_cancel_reopens_listing.sql`.
 
-# v0.6.0.1 — Club Pilot schema alignment
+# v0.6.3.3 – Reservation Retry Safety
 
-- Anpassar Club Pilot till den redan befintliga `organization_applications`-tabellen i Supabase.
-- Återskapar inte tabellen och ändrar inte befintliga kolumner.
-- API:t använder nu `organization_name`, `country_code`, `sport_codes`, `notes` och status `SUBMITTED`.
-- Mina föreningar läser den befintliga tabellstrukturen.
-- Migrationen lägger endast till SELECT/INSERT för authenticated samt RLS-policyer så användaren bara kan skapa och läsa sina egna ansökningar.
-- Ersätter den felaktiga v0.6.0-migrationen.
+- Makes repeated reservation submits by the same buyer idempotent at the database transaction boundary.
+- A double tap, refresh retry or browser resubmit now returns the existing in-progress order instead of creating a duplicate or showing a misleading failure.
+- Competing buyers remain serialized by the listing row lock; only the first valid buyer can start the deal.
+- Adds a client-side submit guard so “Jag vill köpa” disables immediately and shows “Startar affären…”.
+- Adds regression coverage for same-buyer retries, competing-buyer protection and the UI submit guard.
+- No existing live migration is modified; the new migration is additive and has not been applied automatically.
 
-# v0.6.0 — Club Pilot, del 1
+# v0.6.3.2 – Sell publish resilience
 
-- Föreningsansökan.
-- Ansökningsstatus under Mina föreningar.
-- Skyddad föreningsadmin för CLUB_ADMIN/ORG_OWNER.
-- RLS-skyddad migration för organization_applications.
-- Kräver Supabase-migration innan ansökningsfunktionen används live.
+- Creates new listings as DRAFT until every image and image-metadata row has succeeded.
+- Makes failure rollback compatible with the existing own-draft delete RLS policy, preventing broken ACTIVE listings without photos.
+- Preserves the seller draft if publish fails; clears it only after a successful created listing page is reached.
+- Adds a submit guard that disables duplicate publication clicks and shows a publishing state.
+- Tightens server-side price, size and optional UUID handling. Currency is fixed to SEK server-side.
+- Adds regression tests for draft-first publishing, rollback, draft recovery and duplicate-submit protection.
+- No additional database migration beyond the already bundled core authenticated permissions migration.
 
-# v0.5.4.2 — Visible app version
+# Repassing v0.6.3.1 — Core flow regression guard
 
-- Shows the current Repassing version globally at the bottom of the app.
-- Uses one central `APP_VERSION` constant for the UI version label.
-- Aligns `VERSION` and `package.json` to 0.5.4.2.
-- No database migration required.
+## Why
+A successful Next.js build does not prove that the marketplace transaction state machine is usable. v0.6.3.0 fixed a verified case where an unpaid local reservation could become stuck before handoff. This release prevents that contract from silently regressing.
 
-# Repassing v0.5.4.1 — Marketplace UX polish
+## Changes
+- Adds `tests/core-flow.test.mjs` using Node's built-in test runner; no new package dependency.
+- Verifies that the unpaid local-handoff migration:
+  - accepts only reservation/payment-pending states,
+  - moves the order to `FULFILLMENT_PENDING`,
+  - records the transition,
+  - remains executable only by `service_role`.
+- Verifies that the reservation route activates the handoff bridge only when Stripe mode is disabled.
+- Verifies that the order UI exposes local handoff for the correct states and payment UI only in live Stripe mode.
+- Verifies that the Payouts entry point remains hidden outside Stripe mode.
+- CI now runs `npm run test:core` before typecheck and build.
+- `npm run check` and `npm run verify` now include the regression test.
 
-- Kollapsade filter förblir sekundära och visar antal aktiva filter.
-- Mobilfilter beter sig som en bottenpanel när de öppnas.
-- Hero-sektionen är kompaktare så marknaden kommer högre upp.
-- Empty state vid tom marknad har tydligare supply-CTA: sälj första prylen.
-- Den lågvärdiga trekolumnsremsan längst ned på startsidan är borttagen.
-- Ingen databasmigration krävs.
-# Repassing v0.5.4 — Marketplace Simplification
+## Database
+No new database migration in v0.6.3.1. It retains the v0.6.3.0 migration `20260903111500_activate_unpaid_local_handoff.sql`, which still needs to be applied and verified before release if it has not already been applied.
 
-- Removes the hard-coded ÖSK Fotboll marketplace identity and derives club context from live data/filter state.
-- Makes the marketplace value proposition clearer for first-time visitors.
-- Collapses advanced marketplace filters behind a simple Filter control; active filters remain visible/open.
-- Adds a supply-focused empty state with a direct Sell action when the marketplace has no listings.
-- Simplifies the Sell flow: SEK is implicit, optional description/club/team/sport/category/brand fields are grouped under “More details”.
-- Removes developer-facing LIVE MARKETPLACE/Storage wording from the sell experience.
-- Changes mobile navigation from Favorites to Deals/Orders, while Favorites remain available in the header and marketplace.
-- No database migration.
+## Verification status
+The dependency-free core regression test can be run in any Node 20+ environment. Full Next.js typecheck/build still requires installed project dependencies and must be completed before deployment.
+
+## v0.6.3.7 — Deal Next-Step Clarity
+
+- Reworked the deal detail page around one clear primary next action.
+- Local handoff now guides users through planning first, then confirmation.
+- Waiting states explicitly say when the user has nothing to do.
+- Messages and listing links are secondary actions rather than competing primary CTAs.
+- Technical order facts, history, handoff edits and cancellation are progressively disclosed.
+- Added compact handoff summary and participant confirmation state.
+- Added regression coverage for next-step hierarchy and progressive disclosure.
+- No new database migration in this release.

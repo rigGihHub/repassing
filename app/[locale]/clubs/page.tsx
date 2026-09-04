@@ -19,18 +19,15 @@ export default async function Page({params}: {params: Promise<{locale: string}>}
   const session = await getCurrentSession();
   if (!session) redirect(`/${locale}/login?next=/${locale}/clubs`);
 
-  const memberships = await getMembershipsForUser(session.user.id);
   const sv = locale === 'sv';
-  let applications: Awaited<ReturnType<typeof listMyOrganizationApplications>> = [];
-  let applicationsUnavailable = false;
-
-  if (runtimeConfig.dataMode === 'supabase') {
-    try {
-      applications = await listMyOrganizationApplications();
-    } catch {
-      applicationsUnavailable = true;
-    }
-  }
+  const [memberships, applicationsResult] = await Promise.all([
+    getMembershipsForUser(session.user.id),
+    runtimeConfig.dataMode === 'supabase'
+      ? listMyOrganizationApplications().then((value) => ({ok: true as const, value})).catch(() => ({ok: false as const, value: []}))
+      : Promise.resolve({ok: true as const, value: []})
+  ]);
+  const applications = applicationsResult.value;
+  const applicationsUnavailable = !applicationsResult.ok;
 
   return <main className="accountShell">
     <div className="accountTop"><Link href={`/${locale}`}>← {sv ? 'Till marknaden' : 'Back to marketplace'}</Link></div>

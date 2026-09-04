@@ -18,3 +18,15 @@ export async function getConversationForUser(id:string,userId:string):Promise<Co
   const listing=Array.isArray(data.listing)?data.listing[0]:data.listing; const messages=[...(data.messages??[])].sort((a:any,b:any)=>String(a.created_at).localeCompare(String(b.created_at)));
   return{id:data.id,listingId:data.listing_id,orderId:data.order_id,listingTitle:listing?.title??null,updatedAt:data.updated_at,lastMessage:messages.at(-1)?.body??null,lastMessageAt:messages.at(-1)?.created_at??null,messages:messages.map((m:any)=>({id:m.id,senderUserId:m.sender_user_id,body:m.body,createdAt:m.created_at}))};
 }
+export type ConversationPreview={id:string;messages:{id:string;senderUserId:string;body:string;createdAt:string;}[]};
+export async function getConversationPreviewForUser(id:string,userId:string,limit=3):Promise<ConversationPreview|null>{
+  const supabase=await createSupabaseServerClient();
+  const {data:participant,error:participantError}=await supabase.from('conversation_participants').select('conversation_id').eq('conversation_id',id).eq('user_id',userId).maybeSingle();
+  if(participantError) throw new Error(`Could not load conversation access: ${participantError.message}`);
+  if(!participant)return null;
+  const safeLimit=Math.max(1,Math.min(limit,5));
+  const {data,error}=await supabase.from('messages').select('id,sender_user_id,body,created_at').eq('conversation_id',id).is('deleted_at',null).order('created_at',{ascending:false}).limit(safeLimit);
+  if(error) throw new Error(`Could not load conversation preview: ${error.message}`);
+  const messages=[...(data??[])].reverse().map((m:any)=>({id:m.id,senderUserId:m.sender_user_id,body:m.body,createdAt:m.created_at}));
+  return {id,messages};
+}

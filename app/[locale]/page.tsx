@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {mockListings} from '@/src/modules/marketplace/application/mock-listings';
-import {getFavoriteListingIds, getMarketplaceReferenceData, searchMarketplaceListings} from '@/src/modules/marketplace/infrastructure/supabase-marketplace';
+import {getFavoriteListingIds, getMarketplaceBrowseReferenceData, searchMarketplaceListings} from '@/src/modules/marketplace/infrastructure/supabase-marketplace';
 import {getCurrentSession} from '@/src/modules/identity/application/get-current-session';
 import {getUnreadNotificationCount} from '@/src/modules/notifications/infrastructure/supabase-notifications';
 import {runtimeConfig} from '@/src/shared/config/runtime';
@@ -38,14 +38,14 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
   };
   const liveMode=runtimeConfig.dataMode==='supabase';
   let liveListings: Awaited<ReturnType<typeof searchMarketplaceListings>> = [];
-  let referenceData: Awaited<ReturnType<typeof getMarketplaceReferenceData>> = {organizations:[],teams:[],sports:[],categories:[],brands:[]};
+  let referenceData: Awaited<ReturnType<typeof getMarketplaceBrowseReferenceData>> = {organizations:[],teams:[],sports:[],categories:[],brands:[]};
   let session: Awaited<ReturnType<typeof getCurrentSession>> = null;
   let marketplaceUnavailable = false;
 
   if (liveMode) {
     const [listingsResult, referenceResult, sessionResult] = await Promise.allSettled([
       searchMarketplaceListings(filters),
-      getMarketplaceReferenceData(),
+      getMarketplaceBrowseReferenceData(),
       getCurrentSession()
     ]);
     if (listingsResult.status === 'fulfilled') liveListings = listingsResult.value;
@@ -72,6 +72,9 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
   const activeOrganization = referenceData.organizations.find((organization)=>organization.id===filters.organizationId);
   const clubLabel = activeOrganization?.name ?? (svLocale?'Alla föreningar':'All clubs');
   const hasFilters=Boolean(filters.query||filters.organizationId||filters.teamId||filters.sportId||filters.categoryId||filters.brandId||filters.sizeLabel||filters.minPriceMinor!==undefined||filters.maxPriceMinor!==undefined);
+  const lowSupply = liveMode && !marketplaceUnavailable && !hasFilters && liveListings.length > 0 && liveListings.length <= 10;
+  const sellHref = activeOrganization ? `/${locale}/sell?organization=${activeOrganization.id}` : `/${locale}/sell`;
+  const supplyMarketName = activeOrganization?.name ?? (svLocale?'marknaden':'the marketplace');
   const activeFilterCount=[filters.organizationId,filters.teamId,filters.sportId,filters.categoryId,filters.brandId,filters.sizeLabel,filters.minPriceMinor,filters.maxPriceMinor].filter((value)=>value!==undefined&&value!==null&&value!=='').length;
   const qs=new URLSearchParams();Object.entries(sp).forEach(([k,v])=>{const value=first(v);if(value)qs.set(k,value);});const returnPath=`/${locale}${qs.size?`?${qs.toString()}`:''}`;
 
@@ -89,7 +92,7 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
     </header>
 
     <section className="marketHero compactMarketHero">
-      <div className="marketHeroCopy"><span className="eyebrow">{clubLabel}</span><h1>{t.headline}</h1><p>{t.subheadline}</p><div className="heroActions"><Link className="primary inlineAction" href={`/${locale}/sell`}>＋ {t.sell}</Link><a className="secondary inlineAction" href="#marketplace-grid">{t.browse}</a></div></div>
+      <div className="marketHeroCopy"><span className="eyebrow">{clubLabel}</span><h1>{t.headline}</h1><p>{t.subheadline}</p><div className="heroActions"><Link className="primary inlineAction" href={sellHref}>＋ {t.sell}</Link><a className="secondary inlineAction" href="#marketplace-grid">{t.browse}</a></div></div>
       <div className="impactCard"><span className="impactLabel">{svLocale?'TRÄFFAR':'MATCHES'}</span><strong>{marketplaceUnavailable?'—':liveListings.length}</strong><p>{marketplaceUnavailable?(svLocale?'Marknadsdata kunde inte hämtas just nu':'Marketplace data is temporarily unavailable'):hasFilters?(svLocale?'annonser matchar din sökning':'listings match your search'):(svLocale?'aktiva annonser i marknaden just nu':'active listings in the marketplace right now')}</p></div>
     </section>
 
@@ -112,13 +115,13 @@ export default async function Home({params,searchParams}: {params: Promise<{loca
 
       <div className="sectionHead"><div><span className="eyebrow">{hasFilters?(svLocale?'SÖKRESULTAT':'SEARCH RESULTS'):t.inClub}</span><h2>{hasFilters?(svLocale?`${liveListings.length} träffar`:`${liveListings.length} matches`):t.latest}</h2></div><Link className="textButton browseFavorites" href={`/${locale}/favorites`}>{svLocale?'Mina favoriter':'My favorites'} →</Link></div>
 
-      {liveMode&&marketplaceUnavailable?<section className="emptyState"><strong>{svLocale?'Marknaden kunde inte laddas':'Marketplace unavailable'}</strong><p>{svLocale?'Försök igen om en stund. Övriga delar av Repassing fungerar fortfarande.':'Please try again shortly. The rest of Repassing is still available.'}</p><Link className="primary inlineAction" href={`/${locale}`}>{svLocale?'Försök igen':'Try again'}</Link></section>:liveMode&&hasFilters&&!hasLiveListings?<section className="emptyState"><strong>{svLocale?'Inga annonser matchade':'No listings matched'}</strong><p>{svLocale?'Prova att ta bort något filter eller sök med ett bredare ord.':'Try removing a filter or using a broader search term.'}</p><Link className="primary inlineAction" href={`/${locale}`}>{svLocale?'Visa alla annonser':'Show all listings'}</Link></section>:liveMode&&!hasFilters&&!hasLiveListings?<section className="emptyState supplyEmpty" id="marketplace-grid"><span className="emptyEyebrow">{svLocale?'DIN MARKNAD BÖRJAR HÄR':'YOUR MARKET STARTS HERE'}</span><strong>{svLocale?'Sälj första prylen på under en minut':'List the first item in under a minute'}</strong><p>{svLocale?'Fotografera, sätt ett pris och publicera. Ju fler som lägger upp det som blivit för litet, desto bättre blir marknaden för hela föreningen.':'Take a photo, set a price and publish. The more unused gear that gets listed, the better the marketplace becomes for everyone.'}</p><div className="emptyActions"><Link className="primary inlineAction" href={`/${locale}/sell`}>＋ {svLocale?'Sälj första prylen':'List first item'}</Link><Link className="secondary inlineAction" href={`/${locale}/clubs`}>{svLocale?'Välj förening':'Choose club'}</Link></div></section>:<div className="grid" id="marketplace-grid">
+      {liveMode&&marketplaceUnavailable?<section className="emptyState"><strong>{svLocale?'Marknaden kunde inte laddas':'Marketplace unavailable'}</strong><p>{svLocale?'Försök igen om en stund. Övriga delar av Repassing fungerar fortfarande.':'Please try again shortly. The rest of Repassing is still available.'}</p><Link className="primary inlineAction" href={`/${locale}`}>{svLocale?'Försök igen':'Try again'}</Link></section>:liveMode&&hasFilters&&!hasLiveListings?<section className="emptyState"><strong>{svLocale?'Inga annonser matchade':'No listings matched'}</strong><p>{svLocale?'Prova att ta bort något filter eller sök med ett bredare ord.':'Try removing a filter or using a broader search term.'}</p><Link className="primary inlineAction" href={`/${locale}`}>{svLocale?'Visa alla annonser':'Show all listings'}</Link></section>:liveMode&&!hasFilters&&!hasLiveListings?<section className="emptyState supplyEmpty" id="marketplace-grid"><span className="emptyEyebrow">{svLocale?'DIN MARKNAD BÖRJAR HÄR':'YOUR MARKET STARTS HERE'}</span><strong>{svLocale?`Bli först med att lägga upp något i ${supplyMarketName}`:`Be the first to list something in ${supplyMarketName}`}</strong><p>{svLocale?'Ta ett foto, sätt pris och publicera. Det behövs inga långa produkttexter för att komma igång.':'Take a photo, set a price and publish. You do not need a long product description to get started.'}</p><div className="supplySteps"><span><b>1</b>{svLocale?'Foto':'Photo'}</span><span><b>2</b>{svLocale?'Pris':'Price'}</span><span><b>3</b>{svLocale?'Publicera':'Publish'}</span></div><div className="emptyActions"><Link className="primary inlineAction" href={sellHref}>＋ {svLocale?'Sälj första prylen':'List first item'}</Link><Link className="secondary inlineAction" href={`/${locale}/clubs`}>{svLocale?'Välj förening':'Choose club'}</Link></div></section>:<>{lowSupply&&<section className="supplyActivation" aria-label={svLocale?'Hjälp marknaden växa':'Help the marketplace grow'}><div><span className="emptyEyebrow">{svLocale?'MARKNADEN ÄR IGÅNG':'THE MARKETPLACE IS LIVE'}</span><strong>{svLocale?`${liveListings.length} ${liveListings.length===1?'annons':'annonser'} just nu — nästa kan vara din`:`${liveListings.length} ${liveListings.length===1?'listing':'listings'} live — yours could be next`}</strong><p>{svLocale?'Fler relevanta prylar gör det lättare för familjer att både hitta och sälja inom samma idrottsgemenskap.':'More relevant gear makes it easier for families to both buy and sell within the same sports community.'}</p></div><Link className="primary inlineAction" href={sellHref}>＋ {svLocale?'Lägg upp en pryl':'List an item'}</Link></section>}<div className="grid" id="marketplace-grid">
         {hasLiveListings ? liveListings.map((p)=>{const favorite=favoriteIds.has(p.id);return <article className="card" key={p.id}>
-          <Link className="productImage livePlaceholder cardImageLink" href={`/${locale}/listings/${p.id}`}>{p.imageUrl ? <img src={p.imageUrl} alt={p.title}/> : <span>RE</span>}</Link>
+          <Link prefetch={false} className="productImage livePlaceholder cardImageLink" href={`/${locale}/listings/${p.id}`}>{p.imageUrl ? <Image src={p.imageUrl} alt={p.title} fill sizes="(max-width: 620px) 46vw, (max-width: 900px) 44vw, 280px" quality={72}/> : <span>RE</span>}</Link>
           <form action={`/api/v1/favorites/${p.id}`} method="post"><input type="hidden" name="locale" value={locale}/><input type="hidden" name="redirect_to" value={returnPath}/><button className={`heart ${favorite?'favoriteActive':''}`} aria-label={favorite?(svLocale?'Ta bort favorit':'Remove favorite'):t.favorite}>{favorite?'♥':'♡'}</button></form>
-          <div className="cardBody"><span className="productOrg">{p.organizationName ?? 'Repassing'}</span><h3><Link className="cardTitleLink" href={`/${locale}/listings/${p.id}`}>{p.title}</Link></h3><p>{cleanKey(p.categoryName) ?? (svLocale?'Sportutrustning':'Sports equipment')} · {t.size} {p.sizeLabel ?? '—'}</p><strong>{moneyFormatter(locale,p.priceMinor,p.currency)}</strong></div>
+          <div className="cardBody"><strong className="cardPrice">{moneyFormatter(locale,p.priceMinor,p.currency)}</strong><h3><Link prefetch={false} className="cardTitleLink" href={`/${locale}/listings/${p.id}`}>{p.title}</Link></h3><p className="cardMeta">{cleanKey(p.categoryName) ?? (svLocale?'Sportutrustning':'Sports equipment')}<span aria-hidden="true">·</span>{t.size} {p.sizeLabel ?? '—'}</p><span className="productOrg">{p.organizationName ?? 'Repassing'}</span></div>
         </article>}) : !liveMode ? mockListings.map((p)=><article className="card" key={p.id}><div className="productImage livePlaceholder"><span>RE</span></div><button className="heart" aria-label={t.favorite}>♡</button><div className="cardBody"><span className="productOrg">{p.organization}</span><h3>{p.title}</h3><p>{p.category} · {t.size} {p.size}</p><strong>{moneyFormatter(locale,p.price.amountMinor,p.price.currency)}</strong></div></article>) : null}
-      </div>}
+      </div></>}
 
     </section>
 

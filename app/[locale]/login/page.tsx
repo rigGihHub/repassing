@@ -9,6 +9,8 @@ export default async function LoginPage({params, searchParams}: {params: Promise
   const query = await searchParams;
   const sv = locale === 'sv';
   const enabled = runtimeConfig.authMode === 'supabase' && runtimeConfig.supabaseConfigured;
+  const rawNext = query.next ?? '';
+  const safeNext = rawNext.startsWith(`/${locale}/`) && !rawNext.startsWith('//') ? rawNext : `/${locale}/profile`;
 
   return <main className="accountShell authShell">
     <div className="accountTop"><Link href={`/${locale}`}>← {sv?'Till marknaden':'Back to marketplace'}</Link><span className="previewBadge">LIVE AUTH</span></div>
@@ -21,6 +23,7 @@ export default async function LoginPage({params, searchParams}: {params: Promise
       {!enabled && <div className="authNotice">{sv?'Produktionsinloggning är förberedd men inte aktiverad. Koppla Supabase i Vercel för att slå på den.':'Production authentication is wired but not enabled. Connect Supabase in Vercel to switch it on.'}</div>}
       <form action="/api/v1/auth/magic-link" method="post" className="authForm">
         <input type="hidden" name="locale" value={locale}/>
+        <input type="hidden" name="next" value={safeNext}/>
         <label htmlFor="email">E-mail</label>
         <input id="email" name="email" type="email" autoComplete="email" placeholder="namn@example.com" required disabled={!enabled}/>
         <button className="primary" type="submit" disabled={!enabled}>{sv?'Skicka inloggningslänk':'Send sign-in link'}</button>
